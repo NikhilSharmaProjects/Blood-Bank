@@ -11,7 +11,7 @@ public class DBConnection {
     
     private static final String URL = "jdbc:mysql://localhost:3306/blood_bank";
     private static final String USERNAME = "root";
-    private static final String PASSWORD = ""; // Change this to your MySQL password
+    private static final String PASSWORD = "Ishika120625###"; // Change this to your MySQL password
     
     static {
         try {
