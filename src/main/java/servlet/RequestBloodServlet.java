@@ -34,6 +34,42 @@ public class RequestBloodServlet extends HttpServlet {
         String receiverAddress = request.getParameter("receiverAddress");
         int userId = (Integer) session.getAttribute("userId");
         
+        // Validate required parameters
+        if (patientName == null || patientName.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Patient name is required\"}");
+            return;
+        }
+        if (bloodGroup == null || bloodGroup.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Blood group is required\"}");
+            return;
+        }
+        if (units == null || units.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Units is required\"}");
+            return;
+        }
+        if (receiverAddress == null || receiverAddress.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Receiver address is required\"}");
+            return;
+        }
+        
+        int requestedUnits;
+        try {
+            requestedUnits = Integer.parseInt(units.trim());
+            if (requestedUnits <= 0) {
+                response.setContentType("application/json");
+                response.getWriter().write("{\"success\": false, \"message\": \"Units must be greater than 0\"}");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Invalid units format\"}");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             // Check stock availability
             String checkQuery = "SELECT units FROM blood_stock WHERE blood_group = ?";
@@ -43,7 +79,6 @@ public class RequestBloodServlet extends HttpServlet {
             
             if (rs.next()) {
                 int availableUnits = rs.getInt("units");
-                int requestedUnits = Integer.parseInt(units);
                 
                 if (availableUnits >= requestedUnits) {
                     // Stock is available, issue blood

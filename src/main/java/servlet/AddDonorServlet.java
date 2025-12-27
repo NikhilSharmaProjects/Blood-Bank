@@ -26,12 +26,59 @@ public class AddDonorServlet extends HttpServlet {
         String contact = request.getParameter("contact");
         String password = request.getParameter("password");
         
+        // Validate required parameters
+        if (name == null || name.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Name is required\"}");
+            return;
+        }
+        if (age == null || age.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Age is required\"}");
+            return;
+        }
+        if (gender == null || gender.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Gender is required\"}");
+            return;
+        }
+        if (bloodGroup == null || bloodGroup.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Blood group is required\"}");
+            return;
+        }
+        if (contact == null || contact.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Contact is required\"}");
+            return;
+        }
+        if (password == null || password.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Password is required\"}");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             String query = "INSERT INTO donor (name, age, gender, blood_group, contact, password) " +
                           "VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, name);
-            stmt.setInt(2, Integer.parseInt(age));
+            
+            // Parse age with error handling
+            try {
+                int ageValue = Integer.parseInt(age.trim());
+                if (ageValue < 18 || ageValue > 65) {
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\": false, \"message\": \"Age must be between 18 and 65\"}");
+                    return;
+                }
+                stmt.setInt(2, ageValue);
+            } catch (NumberFormatException e) {
+                response.setContentType("application/json");
+                response.getWriter().write("{\"success\": false, \"message\": \"Invalid age format\"}");
+                return;
+            }
+            
             stmt.setString(3, gender);
             stmt.setString(4, bloodGroup);
             stmt.setString(5, contact);

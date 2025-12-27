@@ -23,6 +23,32 @@ public class AddBloodStockServlet extends HttpServlet {
         String bloodGroup = request.getParameter("bloodGroup");
         String units = request.getParameter("units");
         
+        // Validate required parameters
+        if (bloodGroup == null || bloodGroup.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Blood group is required\"}");
+            return;
+        }
+        if (units == null || units.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Units is required\"}");
+            return;
+        }
+        
+        int unitsValue;
+        try {
+            unitsValue = Integer.parseInt(units.trim());
+            if (unitsValue <= 0) {
+                response.setContentType("application/json");
+                response.getWriter().write("{\"success\": false, \"message\": \"Units must be greater than 0\"}");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Invalid units format\"}");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             // Check if blood group exists
             String checkQuery = "SELECT units FROM blood_stock WHERE blood_group = ?";
@@ -36,7 +62,7 @@ public class AddBloodStockServlet extends HttpServlet {
             if (rs.next()) {
                 // Update existing stock
                 int currentUnits = rs.getInt("units");
-                int newUnits = currentUnits + Integer.parseInt(units);
+                int newUnits = currentUnits + unitsValue;
                 query = "UPDATE blood_stock SET units = ? WHERE blood_group = ?";
                 stmt = conn.prepareStatement(query);
                 stmt.setInt(1, newUnits);
@@ -46,7 +72,7 @@ public class AddBloodStockServlet extends HttpServlet {
                 query = "INSERT INTO blood_stock (blood_group, units) VALUES (?, ?)";
                 stmt = conn.prepareStatement(query);
                 stmt.setString(1, bloodGroup);
-                stmt.setInt(2, Integer.parseInt(units));
+                stmt.setInt(2, unitsValue);
             }
             
             int result = stmt.executeUpdate();

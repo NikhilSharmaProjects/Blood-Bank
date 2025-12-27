@@ -24,6 +24,12 @@ public class DonorLoginServlet extends HttpServlet {
         String contact = request.getParameter("contact");
         String password = request.getParameter("password");
         
+        // Validate credentials
+        if (contact == null || contact.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            response.sendRedirect("donor-login.html?error=Please enter both contact and password");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             String query = "SELECT * FROM donor WHERE contact = ? AND password = ?";
             PreparedStatement stmt = conn.prepareStatement(query);

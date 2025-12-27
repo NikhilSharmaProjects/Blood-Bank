@@ -24,6 +24,12 @@ public class UserLoginServlet extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         
+        // Validate credentials
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            response.sendRedirect("user-login.html?error=Please enter both username and password");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             String query = "SELECT * FROM users WHERE username = ? AND password = ?";
             PreparedStatement stmt = conn.prepareStatement(query);

@@ -21,10 +21,26 @@ public class DeleteDonorServlet extends HttpServlet {
         
         String donorId = request.getParameter("donorId");
         
+        // Validate required parameter
+        if (donorId == null || donorId.trim().isEmpty()) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Donor ID is required\"}");
+            return;
+        }
+        
+        int donorIdValue;
+        try {
+            donorIdValue = Integer.parseInt(donorId.trim());
+        } catch (NumberFormatException e) {
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\": false, \"message\": \"Invalid donor ID format\"}");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             String query = "DELETE FROM donor WHERE id = ?";
             PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setInt(1, Integer.parseInt(donorId));
+            stmt.setInt(1, donorIdValue);
             
             int result = stmt.executeUpdate();
             

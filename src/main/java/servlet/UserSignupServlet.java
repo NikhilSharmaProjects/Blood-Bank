@@ -24,6 +24,24 @@ public class UserSignupServlet extends HttpServlet {
         String name = request.getParameter("name");
         String contact = request.getParameter("contact");
         
+        // Validate required parameters
+        if (username == null || username.trim().isEmpty()) {
+            response.sendRedirect("user-signup.html?error=Username is required");
+            return;
+        }
+        if (password == null || password.trim().isEmpty()) {
+            response.sendRedirect("user-signup.html?error=Password is required");
+            return;
+        }
+        if (name == null || name.trim().isEmpty()) {
+            response.sendRedirect("user-signup.html?error=Name is required");
+            return;
+        }
+        if (contact == null || contact.trim().isEmpty()) {
+            response.sendRedirect("user-signup.html?error=Contact is required");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             String query = "INSERT INTO users (username, password, name, contact) VALUES (?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(query);

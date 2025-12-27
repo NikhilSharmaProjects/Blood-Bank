@@ -24,6 +24,12 @@ public class AdminLoginServlet extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         
+        // Validate credentials
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            response.sendRedirect("admin-login.html?error=Please enter both username and password");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             String query = "SELECT * FROM admin WHERE username = ? AND password = ?";
             PreparedStatement stmt = conn.prepareStatement(query);

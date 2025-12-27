@@ -86,50 +86,50 @@ const API = {
     
     // Get dashboard stats
     getDashboardStats: async function() {
-        return await this.get('/blood-bank/dashboard-stats');
+        return await this.get('dashboard-stats');
     },
     
     // View donors
     viewDonors: async function(bloodGroup = '') {
         const url = bloodGroup 
-            ? `/blood-bank/view-donors?bloodGroup=${bloodGroup}`
-            : '/blood-bank/view-donors';
+            ? `view-donors?bloodGroup=${bloodGroup}`
+            : 'view-donors';
         return await this.get(url);
     },
     
     // Add donor
     addDonor: async function(donorData) {
-        return await this.post('/blood-bank/add-donor', donorData);
+        return await this.post('add-donor', donorData);
     },
     
     // Delete donor
     deleteDonor: async function(donorId) {
-        return await this.post('/blood-bank/delete-donor', { donorId });
+        return await this.post('delete-donor', { donorId });
     },
     
     // Search donor
     searchDonor: async function(bloodGroup) {
-        return await this.get(`/blood-bank/search-donor?bloodGroup=${bloodGroup}`);
+        return await this.get(`search-donor?bloodGroup=${bloodGroup}`);
     },
     
     // View blood stock
     viewBloodStock: async function() {
-        return await this.get('/blood-bank/view-blood-stock');
+        return await this.get('view-blood-stock');
     },
     
     // Add blood stock
     addBloodStock: async function(stockData) {
-        return await this.post('/blood-bank/add-blood-stock', stockData);
+        return await this.post('add-blood-stock', stockData);
     },
     
     // Request blood
     requestBlood: async function(requestData) {
-        return await this.post('/blood-bank/request-blood', requestData);
+        return await this.post('request-blood', requestData);
     },
     
     // View blood issue history
     viewBloodIssue: async function() {
-        return await this.get('/blood-bank/view-blood-issue');
+        return await this.get('view-blood-issue');
     }
 };
 
@@ -175,6 +175,6 @@ window.addEventListener('DOMContentLoaded', function() {
 // Logout function
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
-        window.location.href = '/blood-bank/logout';
+        window.location.href = 'logout';
     }
 }

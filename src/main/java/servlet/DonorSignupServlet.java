@@ -26,12 +26,50 @@ public class DonorSignupServlet extends HttpServlet {
         String contact = request.getParameter("contact");
         String password = request.getParameter("password");
         
+        // Validate required parameters
+        if (name == null || name.trim().isEmpty()) {
+            response.sendRedirect("donor-signup.html?error=Name is required");
+            return;
+        }
+        if (age == null || age.trim().isEmpty()) {
+            response.sendRedirect("donor-signup.html?error=Age is required");
+            return;
+        }
+        if (gender == null || gender.trim().isEmpty()) {
+            response.sendRedirect("donor-signup.html?error=Gender is required");
+            return;
+        }
+        if (bloodGroup == null || bloodGroup.trim().isEmpty()) {
+            response.sendRedirect("donor-signup.html?error=Blood group is required");
+            return;
+        }
+        if (contact == null || contact.trim().isEmpty()) {
+            response.sendRedirect("donor-signup.html?error=Contact is required");
+            return;
+        }
+        if (password == null || password.trim().isEmpty()) {
+            response.sendRedirect("donor-signup.html?error=Password is required");
+            return;
+        }
+        
+        int ageValue;
+        try {
+            ageValue = Integer.parseInt(age.trim());
+            if (ageValue < 18 || ageValue > 65) {
+                response.sendRedirect("donor-signup.html?error=Age must be between 18 and 65");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            response.sendRedirect("donor-signup.html?error=Invalid age format");
+            return;
+        }
+        
         try (Connection conn = DBConnection.getConnection()) {
             String query = "INSERT INTO donor (name, age, gender, blood_group, contact, password) " +
                           "VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, name);
-            stmt.setInt(2, Integer.parseInt(age));
+            stmt.setInt(2, ageValue);
             stmt.setString(3, gender);
             stmt.setString(4, bloodGroup);
             stmt.setString(5, contact);
