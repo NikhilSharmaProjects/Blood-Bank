@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Blood Stock - Blood Bank</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="navbar-content">
+                <a href="admin-dashboard.html" class="navbar-brand">🩸 Blood Bank - Admin</a>
+                <div class="navbar-menu">
+                    <a href="admin-dashboard.html" class="navbar-link">Dashboard</a>
+                    <a href="manage-donors.html" class="navbar-link">Manage Donors</a>
+                    <a href="manage-stock.html" class="navbar-link">Manage Stock</a>
+                    <a href="reports.html" class="navbar-link">Reports</a>
+                    <button onclick="logout()" class="btn btn-danger" style="padding: 0.5rem 1rem;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Add Blood Stock Form -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Add Blood Stock</h2>
+            </div>
+
+            <form id="addStockForm">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="bloodGroup">Blood Group</label>
+                        <select id="bloodGroup" name="bloodGroup" class="form-select" required>
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="units">Units to Add</label>
+                        <input type="number" id="units" name="units" class="form-input" min="1" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Stock</button>
+            </form>
+        </div>
+
+        <!-- Current Stock Display -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">Current Blood Stock</h2>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Blood Group</th>
+                            <th>Available Units</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <tr>
+                            <td colspan="3" class="text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Add stock form submission
+        document.getElementById('addStockForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                bloodGroup: document.getElementById('bloodGroup').value,
+                units: document.getElementById('units').value
+            };
+
+            try {
+                const result = await API.addBloodStock(formData);
+                
+                if (result.success) {
+                    Utils.showAlert('Blood stock added successfully!', 'success');
+                    this.reset();
+                    loadBloodStock();
+                } else {
+                    Utils.showAlert(result.message || 'Failed to add blood stock', 'error');
+                }
+            } catch (error) {
+                Utils.showAlert('Error adding blood stock', 'error');
+            }
+        });
+
+        // Load blood stock
+        async function loadBloodStock() {
+            try {
+                const stock = await API.viewBloodStock();
+                const tbody = document.getElementById('stockTableBody');
+
+                if (stock.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center">No stock data available</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = stock.map(item => {
+                    const units = item.units || 0;
+                    let statusBadge = '';
+                    
+                    if (units === 0) {
+                        statusBadge = '<span class="badge badge-danger">Out of Stock</span>';
+                    } else if (units < 10) {
+                        statusBadge = '<span class="badge badge-warning">Low Stock</span>';
+                    } else {
+                        statusBadge = '<span class="badge badge-success">Available</span>';
+                    }
+
+                    return `
+                        <tr>
+                            <td><strong style="font-size: 1.25rem; color: #dc2626;">${item.bloodGroup}</strong></td>
+                            <td><strong style="font-size: 1.125rem;">${units}</strong></td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading blood stock:', error);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', loadBloodStock);
+    </script>
+</body>
+</html>

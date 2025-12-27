@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - Blood Bank</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="navbar-content">
+                <a href="user-dashboard.html" class="navbar-brand">🏥 Blood Bank - Receiver</a>
+                <div class="navbar-menu">
+                    <a href="user-dashboard.html" class="navbar-link">Dashboard</a>
+                    <button onclick="logout()" class="btn btn-danger" style="padding: 0.5rem 1rem;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Blood Request Form -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Request Blood</h2>
+            </div>
+
+            <form id="requestBloodForm">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="patientName">Patient Name</label>
+                        <input type="text" id="patientName" name="patientName" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="bloodGroup">Blood Group Required</label>
+                        <select id="bloodGroup" name="bloodGroup" class="form-select" required>
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="units">Units Required</label>
+                        <input type="number" id="units" name="units" class="form-input" min="1" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="receiverAddress">Delivery Address</label>
+                    <textarea id="receiverAddress" name="receiverAddress" class="form-textarea" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+            </form>
+        </div>
+
+        <!-- Search Donors -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">Search Donors by Blood Group</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="searchBloodGroup">Blood Group</label>
+                <div style="display: flex; gap: 1rem;">
+                    <select id="searchBloodGroup" class="form-select">
+                        <option value="">Select Blood Group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                    <button onclick="searchDonors()" class="btn btn-secondary">Search</button>
+                </div>
+            </div>
+
+            <div class="table-container" id="donorResultsContainer" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Blood Group</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donorSearchResults"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Blood Stock Availability -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">Current Blood Stock</h2>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Blood Group</th>
+                            <th>Available Units</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <tr>
+                            <td colspan="3" class="text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- My Requests -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">My Blood Requests</h2>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Blood Group</th>
+                            <th>Units</th>
+                            <th>Address</th>
+                            <th>Request Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Request blood form submission
+        document.getElementById('requestBloodForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                patientName: document.getElementById('patientName').value,
+                bloodGroup: document.getElementById('bloodGroup').value,
+                units: document.getElementById('units').value,
+                receiverAddress: document.getElementById('receiverAddress').value
+            };
+
+            try {
+                const result = await API.requestBlood(formData);
+                
+                if (result.success) {
+                    Utils.showAlert('Blood request submitted successfully!', 'success');
+                    this.reset();
+                    loadBloodRequests();
+                    loadBloodStock();
+                } else {
+                    Utils.showAlert(result.message || 'Failed to submit request', 'error');
+                }
+            } catch (error) {
+                Utils.showAlert('Error submitting request', 'error');
+            }
+        });
+
+        // Search donors
+        async function searchDonors() {
+            const bloodGroup = document.getElementById('searchBloodGroup').value;
+            
+            if (!bloodGroup) {
+                Utils.showAlert('Please select a blood group', 'error');
+                return;
+            }
+
+            try {
+                const donors = await API.searchDonor(bloodGroup);
+                const container = document.getElementById('donorResultsContainer');
+                const tbody = document.getElementById('donorSearchResults');
+
+                if (donors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No donors found</td></tr>';
+                } else {
+                    tbody.innerHTML = donors.map(donor => `
+                        <tr>
+                            <td>${donor.name}</td>
+                            <td>${donor.age}</td>
+                            <td>${donor.gender}</td>
+                            <td><span class="badge badge-danger">${donor.bloodGroup}</span></td>
+                            <td>${donor.contact}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                container.style.display = 'block';
+            } catch (error) {
+                Utils.showAlert('Error searching donors', 'error');
+            }
+        }
+
+        // Load blood stock
+        async function loadBloodStock() {
+            try {
+                const stock = await API.viewBloodStock();
+                const tbody = document.getElementById('stockTableBody');
+
+                tbody.innerHTML = stock.map(item => {
+                    const units = item.units || 0;
+                    let statusBadge = units > 0 
+                        ? '<span class="badge badge-success">Available</span>'
+                        : '<span class="badge badge-danger">Out of Stock</span>';
+
+                    return `
+                        <tr>
+                            <td><strong>${item.bloodGroup}</strong></td>
+                            <td>${units}</td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading blood stock:', error);
+            }
+        }
+
+        // Load blood requests
+        async function loadBloodRequests() {
+            try {
+                const requests = await API.viewBloodIssue();
+                const tbody = document.getElementById('requestTableBody');
+
+                if (requests.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No requests found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = requests.map(req => `
+                    <tr>
+                        <td>${req.patientName}</td>
+                        <td><span class="badge badge-danger">${req.bloodGroup}</span></td>
+                        <td>${req.units}</td>
+                        <td>${req.receiverAddress}</td>
+                        <td>${Utils.formatDate(req.issueDate)}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading requests:', error);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            loadBloodStock();
+            loadBloodRequests();
+        });
+    </script>
+</body>
+</html>

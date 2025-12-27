@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Blood Bank</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="navbar-content">
+                <a href="admin-dashboard.html" class="navbar-brand">🩸 Blood Bank - Admin</a>
+                <div class="navbar-menu">
+                    <a href="admin-dashboard.html" class="navbar-link">Dashboard</a>
+                    <a href="manage-donors.html" class="navbar-link">Manage Donors</a>
+                    <a href="manage-stock.html" class="navbar-link">Manage Stock</a>
+                    <a href="reports.html" class="navbar-link">Reports</a>
+                    <button onclick="logout()" class="btn btn-danger" style="padding: 0.5rem 1rem;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Dashboard Overview</h2>
+            </div>
+
+            <div class="dashboard-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDonors">0</div>
+                    <div class="stat-label">Total Donors</div>
+                </div>
+
+                <div class="stat-card secondary">
+                    <div class="stat-value" id="totalBloodUnits">0</div>
+                    <div class="stat-label">Total Blood Units</div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-value" id="totalIssues">0</div>
+                    <div class="stat-label">Blood Issues</div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Registered Users</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Current Blood Stock</h3>
+                <div class="table-container">
+                    <table id="stockTable">
+                        <thead>
+                            <tr>
+                                <th>Blood Group</th>
+                                <th>Available Units</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody">
+                            <tr>
+                                <td colspan="3" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const stats = await API.getDashboardStats();
+                document.getElementById('totalDonors').textContent = stats.totalDonors || 0;
+                document.getElementById('totalBloodUnits').textContent = stats.totalBloodUnits || 0;
+                document.getElementById('totalIssues').textContent = stats.totalIssues || 0;
+                document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load blood stock
+        async function loadBloodStock() {
+            try {
+                const stock = await API.viewBloodStock();
+                const tbody = document.getElementById('stockTableBody');
+                
+                if (stock.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center">No stock data available</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = stock.map(item => {
+                    const units = item.units || 0;
+                    let statusBadge = '';
+                    
+                    if (units === 0) {
+                        statusBadge = '<span class="badge badge-danger">Out of Stock</span>';
+                    } else if (units < 10) {
+                        statusBadge = '<span class="badge badge-warning">Low Stock</span>';
+                    } else {
+                        statusBadge = '<span class="badge badge-success">Available</span>';
+                    }
+
+                    return `
+                        <tr>
+                            <td><strong>${item.bloodGroup}</strong></td>
+                            <td>${units}</td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading blood stock:', error);
+                document.getElementById('stockTableBody').innerHTML = 
+                    '<tr><td colspan="3" class="text-center">Error loading data</td></tr>';
+            }
+        }
+
+        // Initialize dashboard
+        window.addEventListener('DOMContentLoaded', function() {
+            loadDashboardStats();
+            loadBloodStock();
+        });
+    </script>
+</body>
+</html>

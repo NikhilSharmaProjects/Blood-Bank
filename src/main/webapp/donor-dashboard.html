@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - Blood Bank</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="navbar-content">
+                <a href="donor-dashboard.html" class="navbar-brand">🩸 Blood Bank - Donor</a>
+                <div class="navbar-menu">
+                    <a href="donor-dashboard.html" class="navbar-link">Dashboard</a>
+                    <button onclick="logout()" class="btn btn-danger" style="padding: 0.5rem 1rem;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Welcome, Donor!</h2>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>Thank you for being a donor!</strong> Your contribution saves lives every day.
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <h3>Your Donor Information</h3>
+                <p><strong>Name:</strong> <span id="donorName">Loading...</span></p>
+                <p><strong>Blood Group:</strong> <span id="bloodGroup" class="badge badge-danger">Loading...</span></p>
+                <p><strong>Contact:</strong> <span id="contact">Loading...</span></p>
+            </div>
+        </div>
+
+        <!-- Blood Stock Availability -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">Current Blood Stock</h2>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Blood Group</th>
+                            <th>Available Units</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <tr>
+                            <td colspan="3" class="text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Donation Guidelines -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">Donation Guidelines</h2>
+            </div>
+
+            <ul style="line-height: 2; color: #374151;">
+                <li>Age should be between 18-65 years</li>
+                <li>Weight should be at least 50 kg</li>
+                <li>Hemoglobin level should be 12.5 g/dL or above</li>
+                <li>Wait at least 3 months between donations</li>
+                <li>Be in good health and well-rested</li>
+                <li>Avoid alcohol 24 hours before donation</li>
+                <li>Eat a healthy meal before donating</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // This would typically load from session
+        // For demo purposes, showing static content
+        window.addEventListener('DOMContentLoaded', function() {
+            // Load donor info from session (in real implementation)
+            // For now, showing placeholder text
+            
+            loadBloodStock();
+        });
+
+        // Load blood stock
+        async function loadBloodStock() {
+            try {
+                const stock = await API.viewBloodStock();
+                const tbody = document.getElementById('stockTableBody');
+
+                tbody.innerHTML = stock.map(item => {
+                    const units = item.units || 0;
+                    let statusBadge = '';
+                    
+                    if (units === 0) {
+                        statusBadge = '<span class="badge badge-danger">Needed</span>';
+                    } else if (units < 10) {
+                        statusBadge = '<span class="badge badge-warning">Low</span>';
+                    } else {
+                        statusBadge = '<span class="badge badge-success">Good</span>';
+                    }
+
+                    return `
+                        <tr>
+                            <td><strong>${item.bloodGroup}</strong></td>
+                            <td>${units}</td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading blood stock:', error);
+            }
+        }
+    </script>
+</body>
+</html>
