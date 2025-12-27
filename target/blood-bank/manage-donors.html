@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Donors - Blood Bank</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="navbar-content">
+                <a href="admin-dashboard.html" class="navbar-brand">🩸 Blood Bank - Admin</a>
+                <div class="navbar-menu">
+                    <a href="admin-dashboard.html" class="navbar-link">Dashboard</a>
+                    <a href="manage-donors.html" class="navbar-link">Manage Donors</a>
+                    <a href="manage-stock.html" class="navbar-link">Manage Stock</a>
+                    <a href="reports.html" class="navbar-link">Reports</a>
+                    <button onclick="logout()" class="btn btn-danger" style="padding: 0.5rem 1rem;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Add Donor Form -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Add New Donor</h2>
+            </div>
+
+            <form id="addDonorForm">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Full Name</label>
+                        <input type="text" id="name" name="name" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="age">Age</label>
+                        <input type="number" id="age" name="age" class="form-input" min="18" max="65" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-select" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="bloodGroup">Blood Group</label>
+                        <select id="bloodGroup" name="bloodGroup" class="form-select" required>
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="contact">Contact Number</label>
+                        <input type="text" id="contact" name="contact" class="form-input" pattern="[0-9]{10}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-input" minlength="6" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Donor</button>
+            </form>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">Donor List</h2>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="filterBloodGroup">Filter by Blood Group</label>
+                <select id="filterBloodGroup" class="form-select" onchange="loadDonors()">
+                    <option value="">All Blood Groups</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Blood Group</th>
+                            <th>Contact</th>
+                            <th>Registration Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="donorTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Add donor form submission
+        document.getElementById('addDonorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                bloodGroup: document.getElementById('bloodGroup').value,
+                contact: document.getElementById('contact').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const result = await API.addDonor(formData);
+                
+                if (result.success) {
+                    Utils.showAlert('Donor added successfully!', 'success');
+                    this.reset();
+                    loadDonors();
+                } else {
+                    Utils.showAlert(result.message || 'Failed to add donor', 'error');
+                }
+            } catch (error) {
+                Utils.showAlert('Error adding donor', 'error');
+            }
+        });
+
+        // Load donors
+        async function loadDonors() {
+            const bloodGroup = document.getElementById('filterBloodGroup').value;
+            
+            try {
+                const donors = await API.viewDonors(bloodGroup);
+                const tbody = document.getElementById('donorTableBody');
+
+                if (donors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center">No donors found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = donors.map(donor => `
+                    <tr>
+                        <td>${donor.id}</td>
+                        <td>${donor.name}</td>
+                        <td>${donor.age}</td>
+                        <td>${donor.gender}</td>
+                        <td><span class="badge badge-danger">${donor.bloodGroup}</span></td>
+                        <td>${donor.contact}</td>
+                        <td>${Utils.formatDate(donor.registrationDate)}</td>
+                        <td>
+                            <button onclick="deleteDonor(${donor.id})" class="btn btn-danger" style="padding: 0.5rem 1rem;">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading donors:', error);
+            }
+        }
+
+        // Delete donor
+        async function deleteDonor(donorId) {
+            if (!confirm('Are you sure you want to delete this donor?')) {
+                return;
+            }
+
+            try {
+                const result = await API.deleteDonor(donorId);
+                
+                if (result.success) {
+                    Utils.showAlert('Donor deleted successfully!', 'success');
+                    loadDonors();
+                } else {
+                    Utils.showAlert(result.message || 'Failed to delete donor', 'error');
+                }
+            } catch (error) {
+                Utils.showAlert('Error deleting donor', 'error');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', loadDonors);
+    </script>
+</body>
+</html>

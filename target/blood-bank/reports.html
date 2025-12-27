@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Blood Bank</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        @media print {
+            .no-print {
+                display: none;
+            }
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar no-print">
+            <div class="navbar-content">
+                <a href="admin-dashboard.html" class="navbar-brand">🩸 Blood Bank - Admin</a>
+                <div class="navbar-menu">
+                    <a href="admin-dashboard.html" class="navbar-link">Dashboard</a>
+                    <a href="manage-donors.html" class="navbar-link">Manage Donors</a>
+                    <a href="manage-stock.html" class="navbar-link">Manage Stock</a>
+                    <a href="reports.html" class="navbar-link">Reports</a>
+                    <button onclick="logout()" class="btn btn-danger" style="padding: 0.5rem 1rem;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Reports</h2>
+                <button onclick="window.print()" class="btn btn-secondary no-print">Print Report</button>
+            </div>
+
+            <!-- Donor List Report -->
+            <div style="margin-bottom: 3rem;">
+                <h3 style="color: #dc2626; margin-bottom: 1rem;">Donor List Report</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Blood Group</th>
+                                <th>Contact</th>
+                                <th>Registration Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="donorReportBody">
+                            <tr>
+                                <td colspan="7" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Blood Stock Report -->
+            <div style="margin-bottom: 3rem;">
+                <h3 style="color: #dc2626; margin-bottom: 1rem;">Blood Stock Report</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Blood Group</th>
+                                <th>Available Units</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockReportBody">
+                            <tr>
+                                <td colspan="3" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Blood Issue Report -->
+            <div>
+                <h3 style="color: #dc2626; margin-bottom: 1rem;">Blood Issue History</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Patient Name</th>
+                                <th>Blood Group</th>
+                                <th>Units</th>
+                                <th>Delivery Address</th>
+                                <th>Requested By</th>
+                                <th>Issue Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issueReportBody">
+                            <tr>
+                                <td colspan="7" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280;">
+                <p>Generated on: <strong id="reportDate"></strong></p>
+                <p>Blood Bank Management System © 2025</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Load donor report
+        async function loadDonorReport() {
+            try {
+                const donors = await API.viewDonors();
+                const tbody = document.getElementById('donorReportBody');
+
+                if (donors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No donors found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = donors.map(donor => `
+                    <tr>
+                        <td>${donor.id}</td>
+                        <td>${donor.name}</td>
+                        <td>${donor.age}</td>
+                        <td>${donor.gender}</td>
+                        <td><strong>${donor.bloodGroup}</strong></td>
+                        <td>${donor.contact}</td>
+                        <td>${Utils.formatDate(donor.registrationDate)}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading donor report:', error);
+            }
+        }
+
+        // Load stock report
+        async function loadStockReport() {
+            try {
+                const stock = await API.viewBloodStock();
+                const tbody = document.getElementById('stockReportBody');
+
+                tbody.innerHTML = stock.map(item => {
+                    const units = item.units || 0;
+                    let status = '';
+                    
+                    if (units === 0) {
+                        status = 'Out of Stock';
+                    } else if (units < 10) {
+                        status = 'Low Stock';
+                    } else {
+                        status = 'Available';
+                    }
+
+                    return `
+                        <tr>
+                            <td><strong style="font-size: 1.125rem;">${item.bloodGroup}</strong></td>
+                            <td><strong>${units}</strong></td>
+                            <td>${status}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading stock report:', error);
+            }
+        }
+
+        // Load issue report
+        async function loadIssueReport() {
+            try {
+                const issues = await API.viewBloodIssue();
+                const tbody = document.getElementById('issueReportBody');
+
+                if (issues.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No blood issues found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = issues.map(issue => `
+                    <tr>
+                        <td>${issue.id}</td>
+                        <td>${issue.patientName}</td>
+                        <td><strong>${issue.bloodGroup}</strong></td>
+                        <td>${issue.units}</td>
+                        <td>${issue.receiverAddress}</td>
+                        <td>${issue.userName || 'N/A'}</td>
+                        <td>${Utils.formatDate(issue.issueDate)}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading issue report:', error);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('reportDate').textContent = new Date().toLocaleString();
+            loadDonorReport();
+            loadStockReport();
+            loadIssueReport();
+        });
+    </script>
+</body>
+</html>
